@@ -75,12 +75,12 @@ namespace File_Structure_Generator
             // ============================
             // UNIVERSAL STATIC FOLDERS
             // ============================
-            AddFolderCheckbox(".git", true);
-            AddFolderCheckbox(".vs", true);
-            AddFolderCheckbox("bin", true);
-            AddFolderCheckbox("obj", true);
-            AddFolderCheckbox("Properties", true);
-            AddFolderCheckbox("Resources", true);
+            AddFolderCheckbox(".git", false);
+            AddFolderCheckbox(".vs", false);
+            AddFolderCheckbox("bin", false);
+            AddFolderCheckbox("obj", false);
+            AddFolderCheckbox("Properties", false);
+            AddFolderCheckbox("Resources", false);
 
             // ============================
             // Relative checkbox
@@ -159,7 +159,7 @@ namespace File_Structure_Generator
                 Text = pattern,
                 Tag = pattern,
                 AutoSize = true,
-                Checked = false,
+                Checked = true,
                 Location = new Point(10, 20 + (grpFileTypes.Controls.Count * 25))
             };
 
