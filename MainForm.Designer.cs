@@ -24,6 +24,7 @@ namespace File_Structure_Generator
             btnGenerate = new Button();
             btnCopy = new Button();
             btnSave = new Button();
+            btnPreview = new Button();   // << ADDED
             txtPreview = new TextBox();
 
             SuspendLayout();
@@ -74,8 +75,6 @@ namespace File_Structure_Generator
             // ============================
             // UNIVERSAL STATIC FOLDERS
             // ============================
-            // Checked = include
-            // Unchecked = skip
             AddFolderCheckbox(".git", true);
             AddFolderCheckbox(".vs", true);
             AddFolderCheckbox("bin", true);
@@ -115,6 +114,14 @@ namespace File_Structure_Generator
             btnSave.Click += btnSave_Click;
 
             // ============================
+            // Preview Button (ONLY ADDITION)
+            // ============================
+            btnPreview.Location = new Point(660, 240);
+            btnPreview.Size = new Size(100, 32);
+            btnPreview.Text = "Preview…";
+            btnPreview.Click += btnPreview_Click;   // calls your handler
+
+            // ============================
             // Preview textbox
             // ============================
             txtPreview.Location = new Point(12, 350);
@@ -132,6 +139,7 @@ namespace File_Structure_Generator
             Controls.Add(btnGenerate);
             Controls.Add(btnCopy);
             Controls.Add(btnSave);
+            Controls.Add(btnPreview);   // << ADDED
             Controls.Add(txtPreview);
 
             ClientSize = new Size(820, 720);
@@ -142,9 +150,8 @@ namespace File_Structure_Generator
         }
 
         // ===========================================================
-        // THESE MUST EXIST IN THIS PARTIAL CLASS
+        // REQUIRED FOR CHECKBOX CREATION
         // ===========================================================
-
         private void AddFileTypeCheckbox(string pattern)
         {
             var cb = new CheckBox
@@ -180,6 +187,7 @@ namespace File_Structure_Generator
         private Button btnGenerate;
         private Button btnCopy;
         private Button btnSave;
+        private Button btnPreview;   // << ADDED
         private TextBox txtPreview;
     }
 }

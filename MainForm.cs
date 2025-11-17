@@ -1,3 +1,10 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Text;
+using System.Windows.Forms;
+
 namespace File_Structure_Generator
 {
     public partial class MainForm : Form
@@ -7,6 +14,9 @@ namespace File_Structure_Generator
             InitializeComponent();
         }
 
+        // ============================================================
+        // BROWSE BUTTON
+        // ============================================================
         private void btnBrowse_Click(object sender, EventArgs e)
         {
             using var dlg = new FolderBrowserDialog();
@@ -16,22 +26,26 @@ namespace File_Structure_Generator
             }
         }
 
+        // ============================================================
+        // GENERATE BUTTON
+        // ============================================================
         private void btnGenerate_Click(object sender, EventArgs e)
         {
             if (!Directory.Exists(txtRootPath.Text))
             {
-                MessageBox.Show("Invalid root folder.", "Error",
-                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show("Invalid root folder.");
                 return;
             }
 
+            // Collect file pattern list
             var fileFilters = grpFileTypes.Controls
                 .OfType<CheckBox>()
                 .Where(cb => cb.Checked)
-                .Select(cb => cb.Tag.ToString()!)
+                .Select(cb => cb.Tag.ToString())
                 .ToList();
 
-            var includeFolders = grpFolders.Controls
+            // Collect included static folders from the folder-checkbox group
+            var staticFolders = grpFolders.Controls
                 .OfType<CheckBox>()
                 .Where(cb => cb.Checked)
                 .Select(cb => cb.Text)
@@ -39,49 +53,66 @@ namespace File_Structure_Generator
 
             var options = new DirectoryScanOptions
             {
+                RootPath = txtRootPath.Text,
                 UseRelativePaths = chkRelativePaths.Checked,
                 FileFilters = fileFilters,
-                IncludedFolders = includeFolders,
-                RootPath = txtRootPath.Text
+                IncludedFolders = staticFolders  // << CORRECT PROPERTY
             };
 
-            var tree = DirectoryScanner.GenerateTree(options);
-            txtPreview.Text = tree;
+            string result = DirectoryScanner.BuildTree(options);
+
+            txtPreview.Text = result;
         }
 
+        // ============================================================
+        // COPY BUTTON
+        // ============================================================
+        private void btnCopy_Click(object sender, EventArgs e)
+        {
+            if (!string.IsNullOrWhiteSpace(txtPreview.Text))
+            {
+                Clipboard.SetText(txtPreview.Text);
+                MessageBox.Show("Copied.");
+            }
+        }
+
+        // ============================================================
+        // SAVE BUTTON
+        // ============================================================
         private void btnSave_Click(object sender, EventArgs e)
         {
             if (string.IsNullOrWhiteSpace(txtPreview.Text))
             {
-                MessageBox.Show("Nothing to save. Generate first.",
-                    "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show("Nothing to save.");
                 return;
             }
 
-            using var dlg = new SaveFileDialog
-            {
-                Filter = "Text Files (*.txt)|*.txt|Markdown (*.md)|*.md",
-                FileName = "file_structure.txt"
-            };
+            using var sfd = new SaveFileDialog();
+            sfd.Filter = "Text Files|*.txt";
+            sfd.FileName = "structure.txt";
 
-            if (dlg.ShowDialog() == DialogResult.OK)
+            if (sfd.ShowDialog() == DialogResult.OK)
             {
-                File.WriteAllText(dlg.FileName, txtPreview.Text);
-                MessageBox.Show("Saved!", "Success",
-                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+                File.WriteAllText(sfd.FileName, txtPreview.Text);
+                MessageBox.Show("Saved.");
             }
         }
 
-        private void btnCopy_Click(object sender, EventArgs e)
+        // ============================================================
+        // PREVIEW POPUP (OPTION B)
+        // Button exists, only showing popup — NO HTML, NO TEMPLATE
+        // ============================================================
+        private void btnPreview_Click(object sender, EventArgs e)
         {
-            if (string.IsNullOrWhiteSpace(txtPreview.Text))
+            string previewText = txtPreview.Text;
+            if (string.IsNullOrWhiteSpace(previewText))
             {
-                MessageBox.Show("Nothing to copy!", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show("Generate a preview first.");
                 return;
             }
 
-            Clipboard.SetText(txtPreview.Text);
-            MessageBox.Show("Copied to clipboard!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            var popup = new PreviewForm("Preview Output", previewText);
+            popup.Show();
         }
     }
 }
