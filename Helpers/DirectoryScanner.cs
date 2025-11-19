@@ -11,16 +11,12 @@ namespace File_Structure_Generator
         public string RootPath { get; set; } = "";
         public bool UseRelativePaths { get; set; } = true;
 
-        // File type filters
         public List<string> FileFilters { get; set; } = new();
-
-        // Static folder checkboxes from UI
         public List<string> IncludedFolders { get; set; } = new();
     }
 
     public static class DirectoryScanner
     {
-        // Required by MainForm
         public static string BuildTree(DirectoryScanOptions opt) => GenerateTree(opt);
 
         // =====================================================
@@ -44,7 +40,7 @@ namespace File_Structure_Generator
         private static void ScanTree(string path, StringBuilder sb, string indent, DirectoryScanOptions opt)
         {
             var dirs = Directory.GetDirectories(path)
-                .Where(d => !IsStaticFolderExcluded(Path.GetFileName(d), opt))
+                .Where(d => ShouldIncludeFolder(d, opt))
                 .OrderBy(d => d)
                 .ToList();
 
@@ -98,13 +94,16 @@ namespace File_Structure_Generator
 
         private static void WriteMarkdownFolder(string path, StringBuilder sb, int level, DirectoryScanOptions opt)
         {
+            if (!ShouldIncludeFolder(path, opt))
+                return;
+
             string indent = new string(' ', level * 2);
             string folderName = Path.GetFileName(path);
 
             sb.AppendLine($"{indent}- **{folderName}/**");
 
             var dirs = Directory.GetDirectories(path)
-                .Where(d => !IsStaticFolderExcluded(Path.GetFileName(d), opt))
+                .Where(d => ShouldIncludeFolder(d, opt))
                 .OrderBy(d => d)
                 .ToList();
 
@@ -144,6 +143,25 @@ namespace File_Structure_Generator
             return filters.Any(f => f.StartsWith("*.") && ext == f.Substring(1).ToLowerInvariant());
         }
 
+        private static bool ShouldIncludeFolder(string path, DirectoryScanOptions opt)
+        {
+            string folderName = Path.GetFileName(path);
+
+            // Always exclude "env"
+            if (folderName.Equals("env", StringComparison.OrdinalIgnoreCase))
+                return false;
+
+            // Exclude static folders unless enabled
+            if (IsStaticFolderExcluded(folderName, opt))
+                return false;
+
+            // Exclude empty folders
+            if (IsFolderEmpty(path, opt))
+                return false;
+
+            return true;
+        }
+
         private static bool IsStaticFolderExcluded(string folderName, DirectoryScanOptions opt)
         {
             if (string.IsNullOrWhiteSpace(folderName))
@@ -151,18 +169,33 @@ namespace File_Structure_Generator
 
             string lower = folderName.ToLowerInvariant();
 
-            // These are the ONLY static folders bound to checkboxes
             string[] staticFolders =
             {
                 ".git", ".vs", "bin", "obj", "properties", "resources"
             };
 
             if (!staticFolders.Contains(lower))
-                return false;    // always include normal folders (Core, UI, etc.)
+                return false;
 
             return !opt.IncludedFolders.Any(f =>
                 string.Equals(f, folderName, StringComparison.OrdinalIgnoreCase)
             );
+        }
+
+        private static bool IsFolderEmpty(string dir, DirectoryScanOptions opt)
+        {
+            // Any file matching filter?
+            if (Directory.GetFiles(dir).Any(f => MatchesFilter(f, opt.FileFilters)))
+                return false;
+
+            // Any included child folder?
+            foreach (var sub in Directory.GetDirectories(dir))
+            {
+                if (ShouldIncludeFolder(sub, opt))
+                    return false;
+            }
+
+            return true;
         }
 
         private static string FormatSize(long bytes)

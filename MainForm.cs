@@ -72,7 +72,7 @@ namespace File_Structure_Generator
             if (!string.IsNullOrWhiteSpace(txtPreview.Text))
             {
                 Clipboard.SetText(txtPreview.Text);
-                MessageBox.Show("Copied.");
+                //MessageBox.Show("Copied.");
             }
         }
 
